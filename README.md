@@ -47,3 +47,9 @@ Smaller mobile spacing and supporting copy, an explicit custom-comp-card photo w
 Upload folder now lives with the custom-comp-card photo instructions. A following yellow Apply changes link jumps to the gallery footer without leaving the page, including srcdoc device previews. The footer button stays disabled until every photo is kept/favourited/rejected and all saves finish. It applies existing saved label suggestions to kept photos, preserves confirmed labels, notes and decisions, and reports missing suggestions. Candidates remain unconfirmed; this does not run fresh AI inference for new uploads. Repeated applications are idempotent. No new dependency or external photo transmission.
 
 Five isolated Python checks passed, including incomplete-review rejection, confirmed/rejected-photo preservation, successful suggestion persistence and repeat application. Live Sophie button returned zero changes and 296 confirmed photos preserved; original choice/suggestion hashes match v1. Three viewport folder-dialog and anchor interactions passed. Latest new screenshot capture failed after successful DOM checks; earlier captures show the layout. Physical devices are untested.
+
+## 1.0.3 · Review polish
+
+English/Thai guidance asks models to correct AI categories and choose personal favourites. Apply changes uses the main site’s dark glass pill with a yellow arrow. Photos display with rounded edges, no surrounding mat or rotation, while retaining the whole image. Saves and label application behavior remain unchanged.
+
+Photo-logo cleanup is separate local work: a rejected AI trial is not part of the pack. Originals remain intact; no model images are stored in this repository.

@@ -221,3 +221,16 @@ main{padding-bottom:150px}
 html{scroll-behavior:smooth}
 @media(max-width:600px){.review-guide{margin-top:28px}.review-guide .header-actions{margin-bottom:20px}.review-follow{right:16px;left:16px;bottom:max(16px,env(safe-area-inset-bottom))}.review-jump{width:100%;max-width:360px}.review-finish{margin-top:40px;padding:28px 4px}.review-finish h2{font-size:22px}#confirm-review{width:100%}#save-status{bottom:126px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Clean photographs and the same dark glass used by the main model switch. */
+.image-button{background:transparent;border:0;border-radius:0;overflow:visible;display:flex;align-items:center;justify-content:center;box-shadow:none;transform:none}
+.image-button:hover{background:transparent;border:0}
+.image-button img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;border-radius:14px;box-shadow:none;transform:none}
+.photo.selected{outline:0}.photo.selected .pick{color:#78519c;font-weight:500}
+#confirm-review,.review-jump{border:1px solid #ffffff12;border-radius:999px;background:linear-gradient(150deg,#383838,#191919);color:#fff;font-size:16px;font-weight:400;min-height:56px;padding:12px 14px 12px 26px;gap:24px;box-shadow:inset 0 1px 1px #ffffff40,0 3px 10px #0000001c}
+#confirm-review>span:last-child,.review-jump>span:last-child{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#f5e481;color:#292529;font-size:20px;flex:0 0 auto}
+#confirm-review:hover:not(:disabled),.review-jump:hover{background:linear-gradient(150deg,#444,#242424);border-color:#ffffff24;box-shadow:inset 0 1px 1px #ffffff40,0 4px 14px #00000025}
+#confirm-review:active:not(:disabled),.review-jump:active{transform:translateY(1px);box-shadow:inset 0 1px 1px #ffffff40,0 2px 5px #0002}
+#confirm-review:disabled{cursor:default;opacity:.45}
+.review-guide p:first-of-type{font-size:16px;line-height:1.65;max-width:490px}
+@media(max-width:600px){.image-button img{border-radius:11px}.review-guide p:first-of-type{font-size:15px}.review-jump{width:auto;min-width:230px}.review-follow{pointer-events:none}.review-follow>*{pointer-events:auto}#confirm-review{width:auto;min-width:230px}}
