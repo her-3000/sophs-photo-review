@@ -7,10 +7,10 @@ const frameNames = {'close-up':'Close-up','mid-length':'Mid-length','full-length
 const angleNames = {'front':'Front','three-quarter':'Three-quarter','side':'Side','rear':'Rear'};
 const makeupNames = {'makeup':'Makeup','no-makeup':'No makeup'};
 const footwearNames = {'shoes':'Shoes','barefoot':'No shoes','not-visible':'Feet not visible'};
-const clothingNames = {'jeans':'Jeans','trousers':'Trousers','shorts':'Shorts','skirt-dress':'Skirt / dress','swimwear':'Swimwear','activewear':'Activewear','other':'Other clothing'};
+const clothingNames = {'casual':'Casual','streetwear':'Streetwear','runway-wear':'Runway wear','formal-evening':'Gowns','jeans':'Jeans','trousers':'Trousers','shorts':'Shorts','skirt-dress':'Skirt / dress','swimwear':'Swimwear','activewear':'Activewear','other':'Other clothing'};
 let photoOwner = 'Model';
 let photos = [], selections = {}, suggestions = {}, links = [], editing = null, busy = false, adding = false;
-const pending = new Set(), selected = new Set();
+const pending = new Set(), selected = new Set(), categoryFilters = new Set();
 let bulkBusy = false, jumpFrame;
 const shotPresets = {'CU-01':{frame:'close-up',angle:'front'},'ML-01':{frame:'mid-length',angle:'front'},'PF-01':{frame:'close-up',angle:'side'},'FL-01':{frame:'full-length',angle:'front'},'JN-01':{frame:'full-length',angle:'front',clothing:'jeans'}};
 function shotLabel(s) {
@@ -34,11 +34,11 @@ function labelled(s,details=false) {
 }
 function hasTag(s,tag) {return ['frame','angle','makeup','footwear','clothing'].some(k=>s[k]===tag)||(s.types||[]).includes(tag)||(s.uses||[]).includes(tag);}
 function matches(p) {
-  const s=choice(p), year=$('year').value, d=$('decision').value, tag=$('tag').value;
+  const s=choice(p), year=$('year').value, d=$('decision').value;
   const query=$('detail-search').value.trim().toLowerCase();
   const haystack=[s.notes,...labelled(s,true),p.filename,s.smile?'smile smiling':''].join(' ').toLowerCase();
   const detailMatch=!query||query.split(/\s+/).every(term=>haystack.includes(term));
-  return detailMatch && (year==='all'||(year==='unknown'?!/^\d{4}/.test(p.date):p.date.startsWith(year))) && (d==='all'||(d==='not-rejected'?s.decision!=='reject':d==='keep'?['keep','favourite'].includes(s.decision):s.decision===d)) && (tag==='all'||hasTag(s,tag)||(!s.labelsReviewed&&hasTag(suggestions[p.filename]||{},tag)));
+  return detailMatch && (year==='all'||(year==='unknown'?!/^\d{4}/.test(p.date):p.date.startsWith(year))) && (d==='all'||(d==='not-rejected'?s.decision!=='reject':d==='keep'?['keep','favourite'].includes(s.decision):s.decision===d)) && (!categoryFilters.size||[...categoryFilters].some(tag=>hasTag(s,tag)||(!s.labelsReviewed&&hasTag(suggestions[p.filename]||{},tag))));
 }
 let saveFeedbackTimer;
 function saveStatus(text, state) {
@@ -59,12 +59,13 @@ async function save(p,s) {
   finally {pending.delete(p.filename);render();}
 }
 function openLabels(p) {
+  for(const detail of $('labels').querySelectorAll('details'))detail.open=false;
   $('quick-shot').value=''; editing=p; const s=choice(p), suggestion=suggestions[p.filename]; $('label-title').textContent='Labels · photo '+(photos.indexOf(p)+1);
   for(const key of ['frame','angle','makeup','footwear','clothing']) $(key).value=s[key];
   for(const group of ['types','uses']) for(const box of $(group).querySelectorAll('input')) box.checked=s[group].includes(box.value);
   $('smile').checked=s.smile; $('notes').value=s.notes;
   $('suggestion-detail').textContent=suggestion?'Suggested: '+labelled(suggestion).join(' / ')+(suggestion.reason?' · Check: '+suggestion.reason:''):'Not visually classified yet. You can add labels yourself.';
-  $('apply-suggestions').hidden=!suggestion; $('label-save-status').textContent=''; $('labels').showModal();
+  syncLabelSelects(); $('apply-suggestions').hidden=!suggestion; $('label-save-status').textContent=''; $('labels').showModal();
 }
 function render() {
   syncViewTabs();
@@ -74,7 +75,6 @@ function render() {
   const grid=$('grid'); grid.replaceChildren();
   for(const p of shown) {
     const s=choice(p), n=photos.indexOf(p)+1, card=element('article',undefined,'photo'); card.dataset.decision=s.decision;
-    const pick=element('label',undefined,'check pick'), tick=element('input');tick.type='checkbox';tick.checked=selected.has(p.filename);tick.disabled=bulkBusy;tick.setAttribute('aria-label','Select photo '+n);tick.onchange=()=>{tick.checked?selected.add(p.filename):selected.delete(p.filename);card.classList.toggle('selected',tick.checked);updateBulk();};pick.append(tick,document.createTextNode('Select'));card.classList.toggle('selected',tick.checked);card.append(pick);
     const imageButton=element('button',undefined,'image-button'); imageButton.setAttribute('aria-label','Open full photo '+n);
     const img=element('img');img.alt=photoOwner+' photo '+n;img.loading='lazy';img.decoding='async';
     const imageUrl=p.image||'/photos/'+encodeURIComponent(p.filename);
@@ -113,6 +113,7 @@ $('apply-suggestions').onclick=()=>{
   for(const key of ['frame','angle','makeup','footwear','clothing']) $(key).value=s[key]||'unknown';
   // Existing manual type labels stay selected when suggestions are applied.
   for(const box of $('types').querySelectorAll('input')) if((s.types||[]).includes(box.value))box.checked=true;
+  syncLabelSelects();
 };
 $('label-form').onsubmit=async e=>{
   e.preventDefault();if(busy)return;busy=true;$('save-labels').disabled=true;
@@ -125,7 +126,7 @@ for(const value of primaryTypes){const option=element('option',typeNames[value])
 for(const id of ['bulk-category','bulk-shot'])$(id).onchange=updateBulk;
 $('select-visible').onclick=()=>{for(const p of photos.filter(matches))selected.add(p.filename);render();};
 $('clear-selected').onclick=()=>{selected.clear();render();};
-$('quick-shot').onchange=()=>{const preset=shotPresets[$('quick-shot').value];if(preset)for(const [key,value]of Object.entries(preset))$(key).value=value;};
+$('quick-shot').onchange=()=>{const preset=shotPresets[$('quick-shot').value];if(preset)for(const [key,value]of Object.entries(preset))$(key).value=value;syncLabelSelects();};
 $('apply-bulk').onclick=async()=>{
   if($('apply-bulk').disabled)return;
   const names=[...selected];bulkBusy=true;saveStatus('Saving labels…','saving');render();
@@ -192,12 +193,16 @@ for(const [index,button] of viewButtons.entries()){
   };
 }
 
+// Keep each preview screen's filters across live document refreshes.
+const categoryStorageKey='sophs-review-categories:'+document.title+':'+(window.frameElement?.title||'main');
+try{for(const value of JSON.parse(sessionStorage.getItem(categoryStorageKey)||'[]'))if([...$('tag').options].some(option=>option.value===value&&value!=='all'))categoryFilters.add(value);}catch{}
+function rememberCategories(){try{sessionStorage.setItem(categoryStorageKey,JSON.stringify([...categoryFilters]));}catch{}}
 // Pill filters share the existing filter values; only their presentation changes.
 const filterSliders=[];
 function syncFilterSliders(){
   for(const {select,track,thumb,buttons} of filterSliders){
     const active=buttons.find(button=>button.dataset.filterValue===select.value);
-    for(const button of buttons){const chosen=button===active;button.setAttribute('aria-pressed',String(chosen));button.tabIndex=chosen?0:-1;}
+    for(const button of buttons){const chosen=select.id==='tag'?(button.dataset.filterValue==='all'?!categoryFilters.size:categoryFilters.has(button.dataset.filterValue)):button===active;button.setAttribute('aria-pressed',String(chosen));button.tabIndex=select.id==='tag'||chosen?0:-1;}
     if(active){thumb.style.width=active.offsetWidth+'px';thumb.style.height=active.offsetHeight+'px';thumb.style.transform=`translate(${active.offsetLeft}px,${active.offsetTop}px)`;}
   }
 }
@@ -206,7 +211,7 @@ for(const [id,optionsId] of [['year','year-options'],['tag','category-options']]
   for(const option of select.options){
     const button=element('button',option.textContent,'filter-option');button.type='button';button.dataset.filterValue=option.value;
     if(option.value==='2026')button.textContent='2026';
-    button.onclick=()=>{select.value=option.value;selected.clear();render();button.scrollIntoView({block:'nearest',inline:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
+    button.onclick=()=>{if(id==='tag'){if(option.value==='all')categoryFilters.clear();else if(categoryFilters.has(option.value))categoryFilters.delete(option.value);else categoryFilters.add(option.value);rememberCategories();}else select.value=option.value;selected.clear();render();button.scrollIntoView({block:'nearest',inline:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
     buttons.push(button);track.append(button);
   }
   for(const [index,button] of buttons.entries())button.onkeydown=event=>{
@@ -216,7 +221,7 @@ for(const [id,optionsId] of [['year','year-options'],['tag','category-options']]
     else if(event.key==='Home')next=0;
     else if(event.key==='End')next=buttons.length-1;
     else return;
-    event.preventDefault();buttons[next].focus({preventScroll:true});buttons[next].click();
+    event.preventDefault();buttons[next].focus({preventScroll:true});if(id==='tag')buttons[next].scrollIntoView({block:'nearest',inline:'nearest'});else buttons[next].click();
   };
   filterSliders.push({select,track,thumb,buttons});
 }
@@ -224,45 +229,60 @@ const filterResizeObserver=new ResizeObserver(syncFilterSliders);
 for(const {track} of filterSliders)filterResizeObserver.observe(track);
 syncFilterSliders();
 
+const categoryScroller=document.querySelector('.category-slider');
+const categoryScrollMark=document.querySelector('.category-scroll-indicator span');
+function updateCategoryScroll(){
+  const width=categoryScroller.clientWidth, total=categoryScroller.scrollWidth;
+  const ratio=Math.min(1,width/total);
+  categoryScrollMark.style.width=(ratio*100)+'%';
+  categoryScrollMark.style.transform=`translateX(${categoryScroller.scrollLeft/total*100/ratio}%)`;
+  categoryScrollMark.parentElement.hidden=ratio>=1;
+}
+categoryScroller.addEventListener('scroll',updateCategoryScroll,{passive:true});
+new ResizeObserver(updateCategoryScroll).observe(categoryScroller);
+updateCategoryScroll();
+
 // This switch translates the agency introduction only; gallery records are untouched.
 const introCopy = {
   en: {
-    headlineFind: 'We find you work through AI.',
-    headlinePay: 'We pay you before the client pays us.',
+    headlineFind: 'AI finds your next job.',
+    headlinePay: 'We pay you first.',
     headlineModel: 'You model.',
-    demoPrefix: 'Our goal: ',
-    demoCaption: 'apply within 2 minutes of finding a suitable job for you, through the client’s preferred channel.',
-    lead: 'Comp cards matched to the jobs you love. We handle the applications.',
-    lineStart: 'Your private ',
-    lineEnd: ' updates: applications, dates and travel times. Plus a job group with the client.',
-    fit: 'Another agency? Work with us where your agreement allows. No lock-in.',
-    promise: 'Find and arrange your own job? Keep 100%.',
-    reviewTitle: 'Photos for your custom comp cards',
-    reviewHelp: 'Upload photos in bulk, then keep or reject each one. Apply changes at the bottom when you’re done.',
-    reviewSave: 'AI suggests categories, but isn’t perfect. Check them and choose your favourites.',
+    demoPrefix: 'Goal: ',
+    demoCaption: 'Apply within 20 minutes.',
+    lead: 'Comp cards matched to each job.',
+    lineStart: '',
+    lineEnd: ' updates: applications, dates & travel times.',
+    fit: 'No lock-in.',
+    promise: 'Find and arrange your own jobs? Keep 100%.',
+    reviewTitle: 'Your comp-card photos',
+    reviewHelp: 'Upload in bulk. Keep or reject each photo.',
+    reviewSave: 'Check AI labels. Choose your favourites.',
     finishTitle: 'Your photos. Your choice.',
     finishHelp: 'Keep or reject every photo before applying your changes.',
     applyChanges: 'Apply changes',
-    terms: 'For jobs we arrange: 30% commission. Your 70% paid within 24 hours after the job.'
+    share: 'Jobs we arrange: you keep 70%. We take 30%.',
+    terms: 'Paid within 24 hours after the job.'
   },
   th: {
-    headlineFind: 'เราใช้ AI หางานให้คุณ',
-    headlinePay: 'เราจ่ายให้คุณก่อนลูกค้าจ่ายให้เรา',
-    headlineModel: 'คุณโฟกัสที่งานได้เต็มที่',
-    demoPrefix: 'เป้าหมายของเรา: ',
-    demoCaption: 'สมัครภายใน 2 นาทีหลังพบงานที่เหมาะกับคุณ ผ่านช่องทางที่ลูกค้าต้องการ',
-    lead: 'คอมการ์ดที่เหมาะกับงานที่คุณชอบ เราจัดการสมัครงานให้',
+    headlineFind: 'AI หางานให้คุณ',
+    headlinePay: 'เราจ่ายให้คุณก่อน',
+    headlineModel: 'คุณทำงานโมเดล',
+    demoPrefix: 'เป้าหมาย: ',
+    demoCaption: 'สมัครภายใน 20 นาที',
+    lead: 'คอมการ์ดที่เหมาะกับแต่ละงาน',
     lineStart: 'อัปเดตผ่าน ',
-    lineEnd: ' ส่วนตัว: งานที่สมัคร วันที่ และเวลาเดินทาง พร้อมกลุ่มงานกับลูกค้า',
-    fit: 'มีเอเจนซี่อยู่แล้ว? ร่วมงานกับเราได้หากสัญญาอนุญาต ไม่มีสัญญาผูกมัด',
+    lineEnd: ' : งานที่สมัคร วันที่ และเวลาเดินทาง',
+    fit: 'ไม่มีสัญญาผูกมัด',
     promise: 'หางานและจัดการเอง? รับเต็ม 100%',
-    reviewTitle: 'รูปสำหรับคอมการ์ดที่ออกแบบให้คุณ',
-    reviewHelp: 'อัปโหลดรูปพร้อมกันหลายรูป แล้วเลือกเก็บหรือคัดออกทีละรูป เมื่อเสร็จแล้วกดยืนยันการเปลี่ยนแปลงที่ด้านล่าง',
-    reviewSave: 'AI แนะนำหมวดหมู่ แต่อาจผิดได้ ช่วยตรวจ แก้ไข และเลือกรูปโปรดของคุณเอง',
+    reviewTitle: 'รูปสำหรับคอมการ์ดของคุณ',
+    reviewHelp: 'อัปโหลดหลายรูป เลือกเก็บหรือคัดออกทีละรูป',
+    reviewSave: 'ตรวจหมวดหมู่จาก AI แล้วเลือกรูปโปรด',
     finishTitle: 'รูปของคุณ คุณเลือกเอง',
     finishHelp: 'เลือกเก็บหรือคัดออกให้ครบทุกรูปก่อนยืนยัน',
     applyChanges: 'ยืนยันการเปลี่ยนแปลง',
-    terms: 'งานที่เราจัดหาให้: ค่าคอมมิชชัน 30% คุณรับส่วนแบ่ง 70% ภายใน 24 ชั่วโมงหลังจบงาน'
+    share: 'งานที่เราจัดหา: คุณรับ 70% เรารับ 30%',
+    terms: 'รับเงินภายใน 24 ชั่วโมงหลังจบงาน'
   }
 };
 const introLanguageButtons = [...document.querySelectorAll('[data-intro-language]')];
@@ -351,3 +371,53 @@ document.querySelector('.review-jump').onclick=e=>{
   $('apply-changes').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   $('apply-changes').focus({preventScroll:true});
 };
+
+
+// Readable, touch-sized choices instead of the platform's tiny select popup.
+const labelSelectControls=[];
+function syncLabelSelects(){
+  for(const {select,trigger,list,buttons} of labelSelectControls){
+    const selectedText=select.selectedOptions[0]?.textContent||'Not sure';
+    trigger.querySelector('.label-select-value').textContent=selectedText;
+    trigger.setAttribute('aria-label',select.parentElement.childNodes[0].textContent.trim()+': '+selectedText);
+    for(const button of buttons)button.setAttribute('aria-selected',String(button.dataset.value===select.value));
+    list.hidden=true;trigger.setAttribute('aria-expanded','false');
+  }
+}
+for(const select of document.querySelectorAll('#labels select')){
+  const wrapper=element('div',undefined,'label-select');
+  const trigger=element('button',undefined,'label-select-trigger');trigger.type='button';
+  const name=select.parentElement.childNodes[0].textContent.trim();
+  trigger.setAttribute('aria-label',name);trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
+  const value=element('span',undefined,'label-select-value');
+  const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  arrow.classList.add('label-select-arrow');arrow.setAttribute('viewBox','0 0 20 12');arrow.setAttribute('aria-hidden','true');
+  const chevron=document.createElementNS('http://www.w3.org/2000/svg','path');
+  chevron.setAttribute('d','M3 3 10 9 17 3');chevron.setAttribute('fill','none');chevron.setAttribute('stroke','currentColor');chevron.setAttribute('stroke-width','1.7');chevron.setAttribute('stroke-linecap','round');chevron.setAttribute('stroke-linejoin','round');
+  arrow.append(chevron);trigger.append(value,arrow);
+  const list=element('div',undefined,'label-select-options');list.id=select.id+'-choices';list.setAttribute('role','listbox');list.setAttribute('aria-label',name+' choices');list.hidden=true;
+  trigger.setAttribute('aria-controls',list.id);
+  const buttons=[];
+  for(const option of select.options){
+    if(option.hidden)continue;
+    const button=element('button',option.textContent);button.type='button';button.dataset.value=option.value;button.setAttribute('role','option');
+    button.onclick=()=>{select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}));syncLabelSelects();trigger.focus({preventScroll:true});};
+    button.onkeydown=event=>{
+      const index=buttons.indexOf(button);let next;
+      if(event.key==='ArrowDown')next=(index+1)%buttons.length;
+      else if(event.key==='ArrowUp')next=(index+buttons.length-1)%buttons.length;
+      else if(event.key==='Home')next=0;
+      else if(event.key==='End')next=buttons.length-1;
+      else if(event.key==='Escape'){event.preventDefault();syncLabelSelects();trigger.focus({preventScroll:true});return;}
+      else return;
+      event.preventDefault();buttons[next].focus();
+    };
+    buttons.push(button);list.append(button);
+  }
+  trigger.onclick=()=>{const opening=list.hidden;syncLabelSelects();list.hidden=!opening;trigger.setAttribute('aria-expanded',String(opening));};
+  trigger.onkeydown=event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();syncLabelSelects();list.hidden=false;trigger.setAttribute('aria-expanded','true');(buttons.find(b=>b.dataset.value===select.value)||buttons[0]).focus();}};
+  select.hidden=true;select.after(wrapper);wrapper.append(trigger,list);
+  select.addEventListener('change',syncLabelSelects);
+  labelSelectControls.push({select,trigger,list,buttons});
+}
+syncLabelSelects();

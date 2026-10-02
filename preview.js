@@ -38,7 +38,14 @@ async function checkChanges() {
     const response = await fetch('/preview/version');
     if (!response.ok) return;
     const data = await response.json();
-    if (data.version !== version) { version = data.version; await refreshAll(); }
+    if (data.version !== version) {
+      // Never discard a model's in-progress labels while the live preview updates.
+      if(frames.some(frame=>frame.contentDocument?.querySelector('dialog[open]'))){
+        document.querySelector('#preview-status').textContent='Update ready · close the editor to refresh';
+        return;
+      }
+      version = data.version; await refreshAll();
+    }
   } catch {}
 }
 new ResizeObserver(sizeScreens).observe(document.querySelector('main'));

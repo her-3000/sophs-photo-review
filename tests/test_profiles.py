@@ -26,10 +26,10 @@ class ProfileTests(unittest.TestCase):
             shutil.copytree(SOURCE/name, cls.root/name)
         cls.processes = []
         cls.urls = {}
-        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other'), ('apply', 'Apply Test')]:
+        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other'), ('apply', 'Apply Test'), ('styles', 'Style Test')]:
             config = {'id': slug, 'name': name, 'data_dir': f'model-data/{slug}', 'sample_count': 5, 'initial_view': 'all'}
             (cls.root/'profiles'/f'{slug}.json').write_text(json.dumps(config))
-        for slug in ['mina', 'other', 'example', 'apply']:
+        for slug in ['mina', 'other', 'example', 'apply', 'styles']:
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
             process = subprocess.Popen([sys.executable, 'server.py', '--profile', f'profiles/{slug}.json', '--port', str(port)], cwd=cls.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -116,6 +116,15 @@ class ProfileTests(unittest.TestCase):
         self.assertFalse(after[names[1]]['labelsReviewed'])
         repeat = json.loads(self.request('apply', '/api/apply-suggestions', {})[0])
         self.assertEqual(repeat['applied'], 0)
+
+    def test_clothing_styles_save_and_legacy_labels_survive(self):
+        data = json.loads(self.request('styles', '/api/photos')[0])
+        name = data['photos'][0]['filename']
+        base = {'decision':'keep', 'frame':'', 'types':[], 'uses':[], 'smile':False, 'notes':''}
+        for style in ['casual', 'swimwear', 'activewear', 'streetwear', 'runway-wear', 'formal-evening', 'jeans', 'trousers', 'shorts', 'skirt-dress']:
+            self.request('styles', '/api/selection', {'filename':name, 'selection':{**base, 'clothing':style}})
+            saved = json.loads(self.request('styles', '/api/export')[0])
+            self.assertEqual(saved[name]['clothing'], style)
 
     def test_access_boundaries(self):
         for path, data, headers in [('/', None, {'Host':'evil.example'}), ('/api/link', b'{}', {'Origin':'https://evil.example','Content-Type':'application/json'}), ('/photos/../server.py', None, {})]:

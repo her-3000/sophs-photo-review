@@ -280,3 +280,53 @@ html{scroll-behavior:smooth}
   84%{transform:translateY(0) scale(1,1);border-radius:50%}
 }
 @media(prefers-reduced-motion:reduce){.brand-logo{animation:none;transform:none;border-radius:50%}}
+
+/* Sophie's mobile pass: short benefits and independent category pills. */
+.agency-intro p,.agency-intro .line-update,.agency-intro .agency-fit,.agency-intro .agency-terms,.agency-intro .agency-share{font-size:16px;line-height:1.65;margin:9px auto;font-weight:400}
+.agency-intro .agency-promise{font-size:12px;line-height:1.6;color:#666;margin-top:10px}
+@media(max-width:600px){.agency-intro p,.agency-intro .line-update,.agency-intro .agency-fit,.agency-intro .agency-terms,.agency-intro .agency-share{font-size:15px}}
+.category-slider{scrollbar-width:none;-ms-overflow-style:none}
+.category-slider::-webkit-scrollbar{display:none}
+.category-slider .filter-thumb{display:none}
+.category-slider .filter-option{font-size:15px;color:#444}
+.category-slider .filter-option[aria-pressed=true]{background:linear-gradient(150deg,#333,#191919);color:#fff;box-shadow:inset 0 1px 1px #ffffff30}
+.category-scroll-indicator{height:3px;background:#e8e5e9;border-radius:999px;overflow:hidden;margin:0 12px 9px}
+.category-scroll-indicator[hidden]{display:none}
+.category-scroll-indicator span{display:block;height:100%;background:#aaa4ae;border-radius:999px}
+
+/* Simple per-photo labels: category pills first, optional details folded away. */
+.bulk[hidden]{display:none}
+#labels{max-width:520px;border:0;border-radius:24px;background:#faf9f7;padding:20px}
+#label-form>.top{align-items:center;gap:12px}
+#label-title{font-size:20px}
+#close-labels{border:0;background:#eeede9;border-radius:999px;min-width:44px;font-size:22px}
+#labels .label-help{font-size:14px;margin:4px 0 14px}
+#labels fieldset{margin:12px 0 20px}
+#labels legend{font-size:14px;color:#555;font-weight:400}
+#labels .label-pills{gap:8px}
+#labels .label-pills>.check{position:relative;min-height:44px;padding:10px 15px;border-radius:999px;background:#eeede9;cursor:pointer;color:#333;font-size:14px}
+#labels .label-pills>.check input{position:absolute;opacity:0;width:1px;height:1px;left:12px}
+#labels .label-pills>.check:has(input:checked){background:#222;color:#fff}
+#labels .label-pills>.check:has(input:focus-visible){outline:2px solid #78519c;outline-offset:3px}
+#labels .label-pills>details{width:100%;margin-top:8px}
+#labels summary{cursor:pointer;font-size:14px;padding:12px 0;min-height:44px;color:#555}
+#labels details[open]>summary{margin-bottom:8px}
+#labels .label-more{border-top:1px solid #e8e7e3}
+#labels .label-more>label,#labels .label-fields{margin-top:12px;font-size:14px}
+#labels .label-footer #save-labels{border:0;border-radius:999px;font-size:15px}
+@media(max-width:600px){#labels{padding:18px;width:calc(100% - 24px)}#label-form{max-height:calc(90dvh - 36px)}}
+
+/* Quiet arrows with readable choices in the photo-label editor. */
+#labels select[hidden]{display:none}
+.label-select{margin:6px 0;min-width:0}
+#labels .label-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:50px;padding:12px 17px;border:0;border-radius:999px;background:#eeede9;color:#292929;text-align:left;font-size:17px;font-weight:500;line-height:1.4;box-shadow:0 2px 6px #00000004}
+.label-select-value{min-width:0}
+#labels .label-select-arrow{display:block;width:18px;height:12px;flex:0 0 18px;color:#858585;overflow:visible;pointer-events:none;transition:transform 150ms ease}
+#labels .label-select-trigger[aria-expanded=true] .label-select-arrow{transform:rotate(180deg)}
+.label-select-options{margin:8px 0 12px;padding:5px;background:#fff;border:1px solid #e5e3df;border-radius:18px;box-shadow:0 4px 14px #00000008}
+.label-select-options[hidden]{display:none}
+#labels .label-select-options button{display:block;width:100%;text-align:left;min-height:48px;padding:11px 14px;border:0;border-radius:12px;background:transparent;font-size:17px;line-height:1.45;font-weight:500;color:#292929}
+#labels .label-select-options button[aria-selected=true]{background:#eeede9}
+#labels .label-select-options button:hover{background:#f4f3f0}
+#labels .label-fields>label,#labels .label-more>label{font-size:15px;color:#555}
+
