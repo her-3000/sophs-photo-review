@@ -266,3 +266,17 @@ html{scroll-behavior:smooth}
   .review-jump,#confirm-review{min-width:0;width:auto;font-size:14px;padding:10px 20px;min-height:52px}
 }
 @media(prefers-reduced-motion:reduce){.filter-thumb{transition:none}}
+
+/* Slow SM-26 blob: stretch down, recover, widen, settle. No layout movement. */
+.brand-logo{
+  transform-origin:50% 18%;
+  animation:sm26-blob 12s cubic-bezier(.45,0,.25,1) infinite;
+}
+@keyframes sm26-blob{
+  0%,100%{transform:translateY(0) scale(1,1);border-radius:50%}
+  18%{transform:translateY(3px) scale(.94,1.14);border-radius:47% 53% 46% 54% / 43% 44% 56% 57%}
+  43%{transform:translateY(0) scale(1,1);border-radius:50%}
+  62%{transform:translateY(0) scale(1.12,.94);border-radius:54% 46% 52% 48% / 48% 53% 47% 52%}
+  84%{transform:translateY(0) scale(1,1);border-radius:50%}
+}
+@media(prefers-reduced-motion:reduce){.brand-logo{animation:none;transform:none;border-radius:50%}}
