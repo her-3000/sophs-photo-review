@@ -9,8 +9,12 @@ import sys
 import tempfile
 import time
 import unittest
+import zlib
+import struct
+import http.client
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
 SOURCE = Path(__file__).resolve().parents[1]
 PHOTO = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6l9sAAAAASUVORK5CYII=')
@@ -26,10 +30,10 @@ class ProfileTests(unittest.TestCase):
             shutil.copytree(SOURCE/name, cls.root/name)
         cls.processes = []
         cls.urls = {}
-        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other'), ('apply', 'Apply Test'), ('styles', 'Style Test')]:
+        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other'), ('apply', 'Apply Test'), ('styles', 'Style Test'), ('uploads', 'Upload Test')]:
             config = {'id': slug, 'name': name, 'data_dir': f'model-data/{slug}', 'sample_count': 5, 'initial_view': 'all'}
             (cls.root/'profiles'/f'{slug}.json').write_text(json.dumps(config))
-        for slug in ['mina', 'other', 'example', 'apply', 'styles']:
+        for slug in ['mina', 'other', 'example', 'apply', 'styles', 'uploads']:
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
             process = subprocess.Popen([sys.executable, 'server.py', '--profile', f'profiles/{slug}.json', '--port', str(port)], cwd=cls.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -87,6 +91,42 @@ class ProfileTests(unittest.TestCase):
         self.assertNotIn(photo['filename'], [p['filename'] for p in other['photos']])
         self.request('mina', '/api/link', {'url':'https://example.com/portfolio', 'title':'Portfolio'})
         self.assertEqual(json.loads(self.request('other', '/api/photos')[0])['links'], [])
+
+    def test_large_original_and_cloud_links(self):
+        original = PHOTO + b'\0' * (26 * 1024 * 1024)
+        uploaded = json.loads(self.request('uploads', '/api/upload', original, {'Content-Type':'image/png'})[0])['photo']
+        self.assertEqual(self.request('uploads', uploaded['image'])[0], original)
+        for url in ['https://www.dropbox.com/scl/fo/example?dl=0', 'https://drive.google.com/drive/folders/example', 'https://photos.app.goo.gl/example']:
+            result = json.loads(self.request('uploads', '/api/link', {'url':url})[0])
+            self.assertEqual(result['link']['url'], url)
+        conn = http.client.HTTPConnection(urlsplit(self.urls['uploads']).netloc, timeout=5)
+        conn.request('POST', '/api/upload', headers={'Origin':self.urls['uploads'], 'Content-Length':str(100 * 1024 * 1024 + 1)})
+        response = conn.getresponse()
+        self.assertEqual(response.status, 400)
+        self.assertIn(b'100 MB', response.read())
+        conn.close()
+
+    @unittest.skipUnless(shutil.which('sips'), 'HEIC/TIFF previews use the built-in macOS converter')
+    def test_apple_and_tiff_originals_with_browser_previews(self):
+        def chunk(kind, data):
+            return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
+        png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 2, 2, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress((b'\0' + b'\xff\0\0' * 2) * 2)) + chunk(b'IEND', b'')
+        source = self.root / 'conversion-source.png'
+        source.write_bytes(png)
+        for format in ['heic', 'tiff']:
+            target = self.root / ('converted.' + format)
+            subprocess.run(['sips', '-s', 'format', format, str(source), '--out', str(target)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            original = target.read_bytes()
+            photo = json.loads(self.request('styles', '/api/upload', original, {'Content-Type':'image/' + format})[0])['photo']
+            self.assertEqual(self.request('styles', photo['original'])[0], original)
+            preview, headers = self.request('styles', photo['image'])
+            self.assertTrue(preview.startswith(b'\xff\xd8\xff'))
+            self.assertEqual(headers['Content-Type'], 'image/jpeg')
+            self.assertTrue(json.loads(self.request('styles', '/api/upload', original)[0])['duplicate'])
+        with self.assertRaises(HTTPError) as caught:
+            self.request('styles', '/api/upload', b'\0\0\0\x18ftypheic\0\0\0\0heic')
+        self.assertEqual(caught.exception.code, 400)
+        caught.exception.close()
 
     def test_apply_saved_suggestions(self):
         data = json.loads(self.request('apply', '/api/photos')[0])

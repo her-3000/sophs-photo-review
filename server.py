@@ -7,6 +7,9 @@ import csv
 import argparse
 import html
 import mimetypes
+import subprocess
+import tempfile
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -162,9 +165,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(206, data[start:end + 1], 'video/mp4', headers)
         if path.startswith('/uploads/'):
             with LOCK:
-                photo = next((p for p in read_additions()['photos'] if p['filename'] == path[9:]), None)
+                photo = next((p for p in read_additions()['photos'] if path[9:] in [p['filename'], p.get('preview_filename')]), None)
             if photo:
-                return self.respond(200, (UPLOADS / photo['filename']).read_bytes(), photo['mime'])
+                return self.respond(200, (UPLOADS / path[9:]).read_bytes(), 'image/jpeg' if path[9:] == photo.get('preview_filename') else photo['mime'])
         if path.startswith('/photos/') and any(r['filename'] == path[8:] for r in ROWS):
             return self.respond(200, (ARCHIVE / path[8:]).read_bytes(), mimetypes.guess_type(path)[0] or 'image/jpeg')
         return self.respond(404, {'error': 'Not found'})
@@ -228,8 +231,8 @@ class Handler(BaseHTTPRequestHandler):
         global ARCHIVE_HASHES
         try:
             size = int(self.headers.get('Content-Length', '0'))
-            if not 0 < size <= 25 * 1024 * 1024:
-                return self.respond(400, {'error': 'Choose a photo up to 25 MB.'})
+            if not 0 < size <= 100 * 1024 * 1024:
+                return self.respond(400, {'error': 'Choose a photo up to 100 MB, or save an album link.'})
             data = self.rfile.read(size)
             if len(data) != size:
                 raise ValueError()
@@ -239,8 +242,12 @@ class Handler(BaseHTTPRequestHandler):
                 extension, mime = 'png', 'image/png'
             elif data.startswith(b'RIFF') and data[8:12] == b'WEBP':
                 extension, mime = 'webp', 'image/webp'
+            elif data[:4] in [b'II\x2a\x00', b'MM\x00\x2a']:
+                extension, mime = 'tiff', 'image/tiff'
+            elif data[4:8] == b'ftyp' and any(brand in [b'heic', b'heix', b'hevc', b'hevx', b'mif1', b'msf1'] for brand in [data[8:12]] + [data[i:i+4] for i in range(16, min(len(data), 64), 4)]):
+                extension, mime = 'heic', 'image/heic'
             else:
-                return self.respond(400, {'error': 'Choose a JPG, PNG or WebP photo.'})
+                return self.respond(400, {'error': 'Choose a JPG, PNG, WebP, HEIC or TIFF photo.'})
             digest = hashlib.sha256(data).hexdigest()
             with LOCK:
                 additions = read_additions()
@@ -252,7 +259,28 @@ class Handler(BaseHTTPRequestHandler):
                 filename = f'upload-{digest}.{extension}'
                 photo = {'filename': filename, 'original_name': Path(unquote(self.headers.get('X-Filename', 'Photo'))).name[:200], 'date': '', 'source': '', 'image': '/uploads/' + filename, 'mime': mime, 'sha256': digest, 'added_at': datetime.now(timezone.utc).isoformat()}
                 UPLOADS.mkdir(exist_ok=True)
+                preview_data = None
+                if extension in ['heic', 'tiff']:
+                    converter = shutil.which('sips')
+                    if not converter:
+                        return self.respond(400, {'error': 'HEIC and TIFF previews need macOS. Save an album link or choose a JPG on this computer.'})
+                    with tempfile.TemporaryDirectory(prefix='sophs-preview-') as temp:
+                        original = Path(temp) / ('original.' + extension)
+                        preview = Path(temp) / 'preview.jpg'
+                        original.write_bytes(data)
+                        try:
+                            subprocess.run([converter, '-s', 'format', 'jpeg', '-s', 'formatOptions', '90', '-Z', '2560', str(original), '--out', str(preview)], check=True, timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            preview_data = preview.read_bytes()
+                            if not preview_data.startswith(b'\xff\xd8\xff'):
+                                raise ValueError()
+                        except (subprocess.SubprocessError, OSError, ValueError):
+                            return self.respond(400, {'error': 'Could not preview this photo. Choose a JPG or save the original album link.'})
+                    photo['preview_filename'] = f'preview-{digest}.jpg'
+                    photo['original'] = '/uploads/' + filename
+                    photo['image'] = '/uploads/' + photo['preview_filename']
                 (UPLOADS / filename).write_bytes(data)
+                if preview_data:
+                    (UPLOADS / photo['preview_filename']).write_bytes(preview_data)
                 additions['photos'].append(photo)
                 write_json(ADDITIONS, additions)
                 FILES.add(filename)

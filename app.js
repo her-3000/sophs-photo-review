@@ -108,6 +108,19 @@ $('detail-search').oninput=()=>{selected.clear();render();};
 $('close-labels').onclick=()=>{if(!busy)$('labels').close();};
 $('labels').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('close-viewer').onclick=()=>$('viewer').close();
+// Dismiss only taps that start and finish outside the photo viewer.
+function outsideViewer(event){
+  const box=$('viewer').getBoundingClientRect();
+  return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;
+}
+let viewerBackdropPress=false;
+$('viewer').addEventListener('pointerdown',event=>{viewerBackdropPress=outsideViewer(event);});
+$('viewer').addEventListener('click',event=>{
+  if(viewerBackdropPress&&outsideViewer(event))$('viewer').close();
+  viewerBackdropPress=false;
+});
+$('viewer').addEventListener('pointercancel',()=>{viewerBackdropPress=false;});
+
 $('apply-suggestions').onclick=()=>{
   const s=suggestions[editing.filename]; if(!s)return;
   for(const key of ['frame','angle','makeup','footwear','clothing']) $(key).value=s[key]||'unknown';
@@ -152,7 +165,7 @@ $('photo-files').onchange=async()=>{
   for(const [i,file] of files.entries()){
     attachmentStatus('Saving photo '+(i+1)+' of '+files.length+'…');
     try{
-      if(file.size>25*1024*1024)throw Error(file.name+': over 25 MB');
+      if(file.size>100*1024*1024)throw Error(file.name+': over 100 MB — save an album link instead');
       const r=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream','X-Filename':encodeURIComponent(file.name)},body:file});
       const data=await r.json();if(!r.ok)throw Error(file.name+': '+data.error);
       if(data.duplicate)duplicates++;else{photos.push(data.photo);added++;}
@@ -253,7 +266,6 @@ const introCopy = {
     lead: 'Comp cards matched to each job.',
     lineStart: '',
     lineEnd: ' updates: applications, dates & travel times.',
-    fit: 'No lock-in.',
     promise: 'Find and arrange your own jobs? Keep 100%.',
     reviewTitle: 'Your comp-card photos',
     reviewHelp: 'Upload in bulk. Keep or reject each photo.',
@@ -273,7 +285,6 @@ const introCopy = {
     lead: 'คอมการ์ดที่เหมาะกับแต่ละงาน',
     lineStart: 'อัปเดตผ่าน ',
     lineEnd: ' : งานที่สมัคร วันที่ และเวลาเดินทาง',
-    fit: 'ไม่มีสัญญาผูกมัด',
     promise: 'หางานและจัดการเอง? รับเต็ม 100%',
     reviewTitle: 'รูปสำหรับคอมการ์ดของคุณ',
     reviewHelp: 'อัปโหลดหลายรูป เลือกเก็บหรือคัดออกทีละรูป',
