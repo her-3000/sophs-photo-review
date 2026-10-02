@@ -1,0 +1,154 @@
+:root{font:15px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#222;background:#faf9f7}*{box-sizing:border-box}body{margin:0}header,main{max-width:1400px;margin:auto;padding:24px}header{padding-bottom:8px}h1{font-weight:400;font-size:36px;margin:8px 0}h2{font-weight:400;margin:0}small{font-size:11px;letter-spacing:2px}p{line-height:1.5;color:#666;max-width:850px}.top{display:flex;align-items:center;justify-content:space-between;gap:20px}.top a{color:#333;font-size:13px}.filters{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}label{display:block}select,textarea,input[type=search]{font:inherit;color:inherit;background:white;border:1px solid #d8d8d8;border-radius:8px;padding:9px;margin:6px 0}select{max-width:100%}button{font:inherit;color:inherit;background:white;border:1px solid #ddd;border-radius:8px;padding:9px 12px;cursor:pointer}button:hover{border-color:#777}button[aria-pressed=true]{background:#222;color:white;border-color:#222}button:focus-visible,a:focus-visible{outline:2px solid #333;outline-offset:3px}button:disabled{opacity:.5;cursor:wait}#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px}.photo{min-width:0}.image-button{border:0;padding:0;background:#eceae6;width:100%;height:320px;border-radius:2px;display:block;overflow:hidden}.image-button img{width:100%;height:100%;object-fit:contain;display:block}.photo h3{font-size:14px;font-weight:500;margin:12px 0 4px}.photo p{font-size:12px;margin:4px 0;min-height:18px}.actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}.actions button{font-size:12px;padding:8px}.source{color:#777;font-size:12px;display:inline-block;margin:8px 0}.tags{font-size:12px;color:#555;min-height:20px}.suggested{color:#777}.photo[data-decision=reject]{opacity:.55}#summary{font-size:13px}#save-status{font-size:13px;min-height:20px;margin:0}.error{color:#b32424}#more{display:block;margin:32px auto}#more[hidden]{display:none}dialog{border:1px solid #ddd;border-radius:12px;max-width:650px;width:calc(100% - 32px);max-height:90vh;padding:24px}dialog::backdrop{background:#0008}.checks{display:flex;gap:10px 18px;flex-wrap:wrap}.check{display:flex;align-items:center;gap:6px;font-size:14px;min-height:32px}fieldset{border:0;padding:0;margin:20px 0}legend{margin-bottom:10px;font-weight:500}.hint{font-size:12px}.label-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.label-fields select{display:block;width:100%}textarea{display:block;width:100%;height:80px}#save-labels{background:#222;color:white;margin-top:15px}#viewer{max-width:1000px;text-align:center}#full-photo{display:block;max-width:100%;max-height:72vh;margin:16px auto;object-fit:contain}@media(max-width:600px){header,main{padding:16px}h1{font-size:28px}.top{align-items:flex-start}.filters{gap:10px}#grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px}.image-button{height:230px}.actions button{padding:9px 7px}.photo h3{font-size:12px}.label-fields{grid-template-columns:1fr}}@media(max-width:380px){#grid{grid-template-columns:1fr}.image-button{height:340px}}
+
+.bulk{border:1px solid #ddd;border-radius:10px;padding:16px;margin-top:16px}.bulk .filters{margin-top:8px;align-items:center}.bulk .hint{margin-bottom:0}.pick{margin-bottom:8px}.photo.selected{outline:2px solid #333;outline-offset:6px}.bulk button{font-size:13px}@media(max-width:600px){.bulk .top{flex-wrap:wrap}}
+
+/* Comfortable review controls; quiet system styling from Callum's Taste. */
+.filters{gap:20px;align-items:flex-end}
+.filters>label{font-size:15px;line-height:1.5;color:#444}
+select,input[type=search]{font-size:20px;font-weight:400;line-height:1.45;min-height:52px;padding:12px 16px;border-color:#cececa;border-radius:12px;background:#fff;color:#222}
+select option{font-size:20px;line-height:1.6;color:#222;background:#fff}
+select optgroup{font-size:17px;font-weight:500;color:#555}
+#tag{min-width:290px}#decision{min-width:220px}#year{min-width:170px}
+#detail-search{width:320px;max-width:100%}
+#bulk-category{min-width:260px}#bulk-shot{min-width:300px}
+select:focus-visible,input[type=search]:focus-visible{outline:2px solid #555;outline-offset:3px}
+.label-fields select,#quick-shot{font-size:18px;min-height:48px}
+.bulk .filters{gap:18px;align-items:flex-end}.bulk #apply-bulk{min-height:52px;font-size:15px}
+@media(max-width:600px){.filters>label{max-width:100%}#tag,#decision,#year,#bulk-category,#bulk-shot{min-width:0;width:100%}.filters>label{width:100%}#detail-search{width:100%}select,input[type=search]{font-size:18px;min-height:48px}.bulk .filters{gap:12px}.label-fields select{font-size:18px}}
+
+.masthead{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px;min-height:116px;margin-bottom:24px}
+.brand-logo{width:100px;height:100px;border-radius:50%;object-fit:contain;display:block}
+.header-actions{justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.header-actions>a{color:#666;font-size:13px;text-underline-offset:3px}
+.clip-button{display:flex;align-items:center;gap:10px;min-height:52px;border-radius:14px;background:transparent;border-color:transparent;font-size:16px}
+.clip-button:hover{background:#eeede9;border-color:transparent}.clip-button svg{width:26px;height:26px}
+input[type=url],input[type=text]{font:inherit;font-size:18px;min-height:50px;width:100%;padding:12px;margin:8px 0 16px;border:1px solid #cececa;border-radius:10px;background:#fff}
+.file-picker{font-size:18px;border:1px dashed #bbb;border-radius:12px;padding:20px;background:#faf9f7}
+.file-picker input{display:block;font:inherit;font-size:15px;margin-top:14px;max-width:100%}
+#attachments hr{border:0;border-top:1px solid #e0dfda;margin:24px 0}#attachments #save-link{min-height:48px;background:#222;color:white}
+#attachment-status{min-height:24px;font-size:14px;overflow-wrap:anywhere}#saved-links{margin-bottom:30px}#saved-links h2{font-size:22px}
+#links-list{display:flex;flex-wrap:wrap;gap:12px 24px}#links-list a{color:#333;text-underline-offset:4px;overflow-wrap:anywhere}
+@media(max-width:600px){.masthead{gap:12px;min-height:92px;margin-bottom:16px}.brand-logo{width:64px;height:64px}.page-title small{font-size:9px;letter-spacing:1px}.page-title h1{font-size:22px}.clip-button span{display:none}.header-actions>a{font-size:11px;max-width:90px;text-align:right}.clip-button{padding:10px}.clip-button svg{width:24px;height:24px}}
+
+/* Same material and movement as the live Female / Male / Apply control. */
+.view-tabs{--position:0;position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:640px;max-width:100%;margin:28px auto 0;padding:4px;border-radius:999px;background:#f2f2f2;box-shadow:0 3px 16px #00000005}
+.view-thumb{position:absolute;z-index:-1;inset:4px auto 4px 4px;width:calc((100% - 8px)/5);border-radius:inherit;background:linear-gradient(150deg,#333,#191919);box-shadow:inset 0 1px 1px #ffffff40,0 2px 5px #0002;transform:translateX(calc(var(--position)*100%));transition:transform 360ms cubic-bezier(.42,0,.24,1);overflow:hidden}
+.view-thumb:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 20%,#ffffff20,transparent 70%);pointer-events:none}
+.view-tabs button{border:0;background:none;min-height:48px;border-radius:999px;padding:8px 10px;font-size:16px;font-weight:400;transition:color .18s;color:#656565}
+.view-tabs button[aria-pressed=true]{background:transparent;color:#fff;border:0}
+.view-tabs button:focus-visible{outline:2px solid #777;outline-offset:3px}
+.filters{margin-top:28px;gap:24px}
+select,input[type=search]{font-size:18px;border:0;border-radius:999px;background:#f2f2f2;box-shadow:0 3px 16px #00000005;padding:12px 20px}
+select option{background:#fff;font-size:18px}
+.bulk{border:0;border-top:1px solid #e8e7e3;border-radius:0;padding:24px 0 0;margin-top:24px}
+.bulk button,.actions button{border:0;border-radius:999px;background:#eeede9}
+.bulk button:hover,.actions button:hover{background:#e3e2dd}
+.actions button[aria-pressed=true],.bulk #apply-bulk:not(:disabled){background:linear-gradient(150deg,#333,#191919);color:#fff;box-shadow:inset 0 1px 1px #ffffff40,0 2px 5px #0002}
+.bulk .top{gap:12px}.bulk .top button{min-height:40px;padding:10px 16px}.actions{gap:7px}.actions button{padding:9px 12px}
+.image-button{border-radius:8px}.header-actions>a,.source{color:#666}
+@media(max-width:600px){.view-tabs{margin-top:24px}.view-tabs button{font-size:13px;padding:8px 3px;min-height:48px}.filters{gap:12px;margin-top:20px}.filters>label{font-size:14px}.bulk{padding-top:20px}.bulk .top{align-items:center}.actions button{padding:9px 10px}}
+@media(prefers-reduced-motion:reduce){.view-thumb,.view-tabs button{transition:none}}
+
+/* Build the review header and controls outward from the centre. */
+.masthead{grid-template-columns:1fr auto 1fr;gap:14px 24px;min-height:0;margin-bottom:20px}
+.brand-logo{grid-column:2;grid-row:1;justify-self:center}
+.page-title{grid-column:1/-1;grid-row:2;justify-self:center;text-align:center}
+.header-actions{grid-column:3;grid-row:1}
+header>p{margin-left:auto;margin-right:auto;text-align:center}
+.filters{justify-content:center}
+.filters>label{display:flex;flex-direction:column;align-items:center;text-align:center}
+.bulk .top{flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.bulk .top>div{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.bulk .filters{justify-content:center;margin-top:20px}
+.bulk .hint{max-width:850px;margin:16px auto 0;text-align:center}
+@media(max-width:600px){.masthead{gap:12px}.page-title h1{font-size:28px}.page-title small{font-size:10px}.header-actions{align-self:center}.filters>label{align-items:stretch}.bulk .top{gap:12px}.bulk .filters{margin-top:16px}}
+
+/* Agency introduction, centred and readable. */
+.agency-intro{max-width:780px;margin:26px auto 30px;text-align:center}
+.agency-intro h2{font-size:clamp(22px,3vw,28px);font-weight:500;line-height:1.25;letter-spacing:-.5px}
+.agency-intro p{color:#403a3d;margin:12px auto;line-height:1.6;text-wrap:pretty}
+.speed-goal{display:block;margin-top:6px}
+.agency-intro .line-update{margin-top:18px;font-weight:500}
+.line-word{color:#007c36;font-weight:700;letter-spacing:.3px}
+@media(max-width:600px){.agency-intro{margin:22px auto 26px}.agency-intro p{font-size:14px}.agency-intro .line-update{max-width:280px}}
+
+/* Worn stamp lettering inspired by Callum’s Pinterest reference. */
+.stamp-filters{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.page-title h1,.agency-intro h2{font-family:'Courier New',Courier,monospace;font-weight:700;text-transform:uppercase;letter-spacing:.055em;color:#222;filter:url('#stamp-ink');text-shadow:.35px 0 currentColor,-.2px .25px currentColor;transform:rotate(-.6deg)}
+.page-title h1{font-size:clamp(26px,4vw,36px);line-height:1.15}
+.agency-intro h2{font-size:clamp(20px,3vw,25px);line-height:1.35;max-width:740px;margin:auto}
+@media(max-width:600px){.page-title h1{font-size:26px}.agency-intro h2{font-size:20px;letter-spacing:.035em}}
+
+/* Put the primary upload action beneath the logo, with its label always visible. */
+.masthead{gap:18px 24px}
+.header-actions{grid-column:1/-1;grid-row:2;justify-self:center;align-items:center}
+.page-title{grid-row:3}
+.choices-export{grid-column:3;grid-row:1;justify-self:end;color:#666;font-size:13px;text-underline-offset:3px;text-align:right}
+.clip-button{justify-content:center;max-width:100%;min-height:56px;padding:13px 20px;gap:12px;border:1.5px solid #333;border-radius:3px;background:#faf9f7;box-shadow:3px 3px 0 #d8d7d2;font-family:'Courier New',Courier,monospace;font-size:18px;font-weight:700;letter-spacing:.035em;text-transform:uppercase}
+.clip-button span{display:inline;filter:url('#stamp-ink')}
+.clip-button:hover{background:#eeede9;border-color:#222;box-shadow:2px 2px 0 #c7c6c0}
+.clip-button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #c7c6c0}
+.clip-button svg{flex:0 0 auto;width:25px;height:25px}
+.clip-button .upload-cursor{width:18px;height:22px;shape-rendering:crispEdges}
+@media(max-width:600px){.masthead{gap:18px 10px}.choices-export{font-size:11px;max-width:88px}.clip-button{font-size:15px;min-height:54px;padding:12px 14px;gap:9px}.clip-button span{display:inline}.clip-button svg{width:23px;height:23px}.clip-button .upload-cursor{width:16px;height:20px}}
+
+/* Bilingual model benefits; the removed eyebrow keeps its original breathing room. */
+.title-breathing-room{display:block;height:14px}
+.intro-language{grid-column:1;grid-row:1;justify-self:start;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;width:160px;padding:4px;background:#f2f2f2;border-radius:999px;--language-index:0}
+.language-thumb{position:absolute;left:4px;top:4px;bottom:4px;width:calc((100% - 8px)/2);border-radius:999px;background:linear-gradient(150deg,#333,#191919);box-shadow:inset 0 1px 1px #ffffff40,0 2px 5px #0002;transform:translateX(calc(var(--language-index)*100%));transition:transform 360ms cubic-bezier(.42,0,.24,1);pointer-events:none}
+.intro-language button{position:relative;z-index:1;border:0;border-radius:999px;background:transparent;min-height:44px;font-size:12px;padding:8px;color:#555}
+.intro-language button[aria-pressed=true]{background:transparent;color:#fff}
+.agency-intro .line-update{font-weight:400;max-width:650px}
+.agency-intro .agency-fit{font-size:13px;color:#666;margin-top:18px}
+.agency-intro .agency-terms{font-weight:600;font-size:14px;margin-top:12px}
+.agency-intro:lang(th) h2{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-transform:none;letter-spacing:0;line-height:1.5}
+.agency-intro:lang(th) p{line-height:1.8}
+@media(max-width:600px){.intro-language{width:112px;padding:3px}.language-thumb{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/2)}.intro-language button{font-size:11px;padding:6px 4px}.title-breathing-room{height:12px}.agency-intro .line-update{max-width:100%}.agency-intro .agency-fit{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.language-thumb{transition:none}}
+
+/* Soft pink folder reference, with a plain label and one centred click target. */
+.masthead{row-gap:24px}
+.clip-button{flex-direction:column;gap:10px;min-height:0;padding:8px 20px;border:0;border-radius:14px;background:transparent;box-shadow:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;font-weight:400;letter-spacing:0;text-transform:none;line-height:1.3}
+.clip-button span{display:block;filter:none}
+.clip-button svg.upload-folder{width:120px;height:auto;overflow:visible}
+.clip-button:hover{background:transparent;border-color:transparent;box-shadow:none}
+.clip-button:hover .upload-folder{filter:brightness(1.025)}
+.clip-button:active{transform:none;box-shadow:none}
+.clip-button:focus-visible{outline:2px solid #333;outline-offset:5px}
+@media(max-width:600px){.masthead{row-gap:20px}.clip-button{gap:9px;padding:6px 18px;font-size:16px}.clip-button svg.upload-folder{width:108px;height:auto}}
+
+/* More breathing room and softened SM-26 purple / yellow accents. */
+header{padding-top:32px}
+.masthead{row-gap:30px;margin-bottom:38px}
+.clip-button{gap:14px}
+.clip-button svg.upload-folder{opacity:.9}
+.agency-intro{margin:0 auto 38px}
+.agency-intro h2{line-height:1.45;max-width:780px;margin-bottom:24px}
+.agency-intro h2>span{display:block;margin-bottom:5px}
+.agency-intro h2 .headline-find{color:#78519c}
+.agency-intro h2 .headline-model{position:relative;isolation:isolate;width:max-content;max-width:100%;margin:0 auto;padding:0 5px}
+.agency-intro h2 .headline-model::before{content:"";position:absolute;z-index:-1;inset:29% -5px 12%;background:linear-gradient(2deg,#f1d64cbf,#f5e481b3);transform:rotate(-1.2deg);clip-path:polygon(0 12%,5% 5%,18% 9%,33% 3%,49% 8%,65% 2%,82% 6%,97% 0,100% 15%,98% 86%,88% 95%,69% 91%,52% 100%,35% 93%,18% 98%,3% 91%)}
+.agency-intro p{margin:16px auto;max-width:710px}
+.agency-intro .line-update{margin-top:22px}
+.agency-intro .agency-terms{margin-top:18px}
+@media(max-width:600px){header{padding-top:24px}.masthead{row-gap:24px;margin-bottom:30px}.clip-button{gap:12px}.agency-intro{margin:0 auto 32px}.agency-intro h2{font-size:18px;line-height:1.5;margin-bottom:20px}.agency-intro:lang(th) h2{font-size:20px}.agency-intro p{margin:14px auto}}
+
+/* Centre the language switch between the logo and the original pink folder. */
+.masthead{row-gap:22px}
+.intro-language{grid-column:1/-1;grid-row:2;justify-self:center}
+.header-actions{grid-row:3;margin-top:2px}
+.page-title{grid-row:4;margin-top:4px}
+.clip-button svg.upload-folder{opacity:1}
+@media(max-width:600px){.masthead{row-gap:20px}.header-actions{margin-top:0}.page-title{margin-top:2px}}
+
+/* A compact silent application loop, using only its lightweight web export. */
+.application-demo{max-width:440px;margin:26px auto 24px;text-align:center}
+.demo-player{position:relative;width:180px;max-width:100%;margin:auto}
+.application-demo video{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:contain;border-radius:10px;background:#e9e7e2;box-shadow:0 3px 15px #0000000e}
+#demo-motion{position:absolute;right:7px;bottom:7px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0;border:0;border-radius:50%;background:#ffffffd9;color:#222;font-size:16px;line-height:1}
+.application-demo figcaption{margin:14px auto 0;font-size:13px;line-height:1.6;color:#555;text-wrap:pretty}
+@media(max-width:600px){.application-demo{margin:22px auto}.demo-player{width:160px}.application-demo figcaption{max-width:310px;font-size:12px}}
+
+.agency-intro .agency-promise{font-size:14px;font-weight:500;color:#78519c;max-width:540px}
+
+.application-demo .caption-highlight{background:#f5e48199;padding:2px 5px;box-decoration-break:clone;-webkit-box-decoration-break:clone;line-height:1.85}

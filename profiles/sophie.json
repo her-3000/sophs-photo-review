@@ -1,0 +1,9 @@
+{
+  "id": "sophie",
+  "name": "Sophie",
+  "title": "Sophie’s photos",
+  "archive": "../sophie-images/facebook-archive",
+  "data_dir": ".",
+  "suggestions": "label-suggestions.json",
+  "initial_view": "keep"
+}

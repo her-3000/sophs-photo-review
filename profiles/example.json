@@ -1,0 +1,9 @@
+{
+  "id": "example",
+  "name": "",
+  "title": "Example photos",
+  "archive": "../sophie-images/facebook-archive",
+  "data_dir": "model-data/example",
+  "sample_count": 5,
+  "initial_view": "all"
+}

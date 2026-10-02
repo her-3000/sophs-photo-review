@@ -1,0 +1,7 @@
+{
+  "id": "new-model",
+  "name": "Your name",
+  "data_dir": "model-data/new-model",
+  "archive": "model-data/new-model/archive",
+  "initial_view": "all"
+}
