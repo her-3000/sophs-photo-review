@@ -53,3 +53,9 @@ Five isolated Python checks passed, including incomplete-review rejection, confi
 English/Thai guidance asks models to correct AI categories and choose personal favourites. Apply changes uses the main site’s dark glass pill with a yellow arrow. Photos display with rounded edges, no surrounding mat or rotation, while retaining the whole image. Saves and label application behavior remain unchanged.
 
 Photo-logo cleanup is separate local work: a rejected AI trial is not part of the pack. Originals remain intact; no model images are stored in this repository.
+
+## 1.0.4 · Filter sliders
+
+Year and Category filters now use the main site’s sliding pills, with Year above Category. Categories occupy two rows with horizontal scrolling; phone years use two rows. Touch targets remain at least 46 pixels and keyboard arrow/Home/End navigation is supported. Apply changes is a quieter black glass pill, appearing only once the gallery is in view. Filtering behavior and saved records are unchanged.
+
+Verified in the live 1440×1000, 820×1180 and 390×844 Codex previews: 2026 + Beauty returns ten photos, keyboard selection and reset work, no horizontal page overflow or console errors. Phone full-photo viewer and footer jump passed. Five isolated Python tests and JavaScript syntax passed. Physical devices remain untested; private photo records remain local.

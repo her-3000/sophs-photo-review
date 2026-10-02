@@ -68,6 +68,7 @@ function openLabels(p) {
 }
 function render() {
   syncViewTabs();
+  syncFilterSliders();
   const shown=photos.filter(matches), counts={}; for(const p of photos){const d=choice(p).decision;counts[d]=(counts[d]||0)+1;}
   $('summary').textContent=shown.length+' matching · '+photos.length+' total · '+(counts.keep||0)+' kept · '+(counts.favourite||0)+' favourites · '+(counts.reject||0)+' rejected · '+(counts.unreviewed||0)+' not reviewed';
   const grid=$('grid'); grid.replaceChildren();
@@ -191,6 +192,38 @@ for(const [index,button] of viewButtons.entries()){
   };
 }
 
+// Pill filters share the existing filter values; only their presentation changes.
+const filterSliders=[];
+function syncFilterSliders(){
+  for(const {select,track,thumb,buttons} of filterSliders){
+    const active=buttons.find(button=>button.dataset.filterValue===select.value);
+    for(const button of buttons){const chosen=button===active;button.setAttribute('aria-pressed',String(chosen));button.tabIndex=chosen?0:-1;}
+    if(active){thumb.style.width=active.offsetWidth+'px';thumb.style.height=active.offsetHeight+'px';thumb.style.transform=`translate(${active.offsetLeft}px,${active.offsetTop}px)`;}
+  }
+}
+for(const [id,optionsId] of [['year','year-options'],['tag','category-options']]){
+  const select=$(id),track=$(optionsId),thumb=track.querySelector('.filter-thumb'),buttons=[];
+  for(const option of select.options){
+    const button=element('button',option.textContent,'filter-option');button.type='button';button.dataset.filterValue=option.value;
+    if(option.value==='2026')button.textContent='2026';
+    button.onclick=()=>{select.value=option.value;selected.clear();render();button.scrollIntoView({block:'nearest',inline:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
+    buttons.push(button);track.append(button);
+  }
+  for(const [index,button] of buttons.entries())button.onkeydown=event=>{
+    let next=index;
+    if(event.key==='ArrowRight')next=(index+1)%buttons.length;
+    else if(event.key==='ArrowLeft')next=(index+buttons.length-1)%buttons.length;
+    else if(event.key==='Home')next=0;
+    else if(event.key==='End')next=buttons.length-1;
+    else return;
+    event.preventDefault();buttons[next].focus({preventScroll:true});buttons[next].click();
+  };
+  filterSliders.push({select,track,thumb,buttons});
+}
+const filterResizeObserver=new ResizeObserver(syncFilterSliders);
+for(const {track} of filterSliders)filterResizeObserver.observe(track);
+syncFilterSliders();
+
 // This switch translates the agency introduction only; gallery records are untouched.
 const introCopy = {
   en: {
@@ -279,7 +312,9 @@ respectDemoMotion();
 
 function updateJumpVisibility(){
   const rect=$('confirm-review').getBoundingClientRect();
-  document.querySelector('.review-follow').hidden=rect.top>=0&&rect.bottom<=document.documentElement.clientHeight;
+  const height=document.documentElement.clientHeight;
+  const galleryVisible=$('grid').getBoundingClientRect().top<height-180;
+  document.querySelector('.review-follow').hidden=!galleryVisible||(rect.top>=0&&rect.bottom<=height);
 }
 function scheduleJumpVisibility(){cancelAnimationFrame(jumpFrame);jumpFrame=requestAnimationFrame(updateJumpVisibility);}
 window.addEventListener('scroll',scheduleJumpVisibility,{passive:true});
