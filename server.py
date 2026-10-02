@@ -176,6 +176,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.add_photo()
         if self.path == '/api/link' and self.headers.get('Content-Type') == 'application/json':
             return self.add_link()
+        if self.path == '/api/apply-suggestions' and self.headers.get('Content-Type') == 'application/json':
+            return self.apply_suggestions()
         if self.path == '/api/batch' and self.headers.get('Content-Type') == 'application/json':
             return self.batch_labels()
         if self.path != '/api/selection' or self.headers.get('Content-Type') != 'application/json':
@@ -282,6 +284,50 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(400, {'error': 'Enter a full http or https link and a short optional name.'})
         except OSError:
             self.respond(500, {'error': 'Could not save this link. Please retry.'})
+
+    def apply_suggestions(self):
+        try:
+            size = int(self.headers.get('Content-Length', '0'))
+            if not 0 < size <= 1024 or json.loads(self.rfile.read(size)) != {}:
+                raise ValueError()
+            with LOCK:
+                state = read_state()
+                remaining = sum(state.get(name, {}).get('decision', 'unreviewed') not in ['keep', 'favourite', 'reject'] for name in FILES)
+                if remaining:
+                    return self.respond(409, {'error': f'Keep or reject the remaining {remaining} photos first.'})
+                suggestions = json.loads(SUGGESTIONS.read_text()) if SUGGESTIONS.exists() else {}
+                if not isinstance(suggestions, dict):
+                    raise ValueError()
+                changed, preserved, missing = {}, 0, 0
+                for name in sorted(FILES):
+                    current = state.get(name, {})
+                    if current.get('decision') not in ['keep', 'favourite']:
+                        continue
+                    if current.get('labelsReviewed'):
+                        preserved += 1
+                        continue
+                    hint = suggestions.get(name)
+                    if not isinstance(hint, dict):
+                        missing += 1
+                        continue
+                    candidate = dict(current)
+                    for key, allowed in [('frame', FRAMES), ('angle', ANGLES), ('makeup', ['unknown', 'makeup']), ('footwear', FOOTWEAR), ('clothing', CLOTHING)]:
+                        if candidate.get(key, 'unknown') in ['', 'unknown'] and hint.get(key) in allowed:
+                            candidate[key] = hint[key]
+                    for key, allowed in [('types', TYPES), ('uses', USES)]:
+                        values = hint.get(key, [])
+                        if isinstance(values, list):
+                            candidate[key] = list(dict.fromkeys(current.get(key, []) + [v for v in values if v in allowed]))
+                    # Suggested labels remain candidates until individually confirmed.
+                    if candidate != current:
+                        state[name] = changed[name] = candidate
+                if changed:
+                    write_json(STATE, state)
+            self.respond(200, {'selections': changed, 'applied': len(changed), 'preserved': preserved, 'missing': missing})
+        except (ValueError, KeyError, TypeError):
+            self.respond(400, {'error': 'Could not read saved suggestions.'})
+        except OSError:
+            self.respond(500, {'error': 'Could not save. Please retry.'})
 
     def batch_labels(self):
         try:

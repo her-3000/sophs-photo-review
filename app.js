@@ -11,7 +11,7 @@ const clothingNames = {'jeans':'Jeans','trousers':'Trousers','shorts':'Shorts','
 let photoOwner = 'Model';
 let photos = [], selections = {}, suggestions = {}, links = [], editing = null, busy = false, adding = false;
 const pending = new Set(), selected = new Set();
-let bulkBusy = false;
+let bulkBusy = false, jumpFrame;
 const shotPresets = {'CU-01':{frame:'close-up',angle:'front'},'ML-01':{frame:'mid-length',angle:'front'},'PF-01':{frame:'close-up',angle:'side'},'FL-01':{frame:'full-length',angle:'front'},'JN-01':{frame:'full-length',angle:'front',clothing:'jeans'}};
 function shotLabel(s) {
   if(s.frame==='full-length'&&s.angle==='front'&&s.clothing==='jeans')return 'JN-01 · Full-length · Jeans';
@@ -24,6 +24,7 @@ function updateBulk(){
   $('selected-count').textContent=selected.size+' selected';
   $('apply-bulk').disabled=bulkBusy||pending.size>0||!selected.size||(!$('bulk-category').value&&!$('bulk-shot').value);
   for(const id of ['select-visible','clear-selected','bulk-category','bulk-shot'])$(id).disabled=bulkBusy;
+  updateReviewProgress();
 }
 function element(tag, text, cls) { const e = document.createElement(tag); if(text !== undefined) e.textContent = text; if(cls) e.className=cls; return e; }
 function choice(p) { return selections[p.filename] || {decision:'unreviewed',frame:'',angle:'unknown',makeup:'unknown',footwear:'unknown',clothing:'unknown',types:[],uses:[],smile:false,notes:'',labelsReviewed:false}; }
@@ -139,7 +140,7 @@ function renderLinks(){
   for(const link of links){const a=element('a',link.title);a.href=link.url;a.target='_blank';a.rel='noopener noreferrer';$('links-list').append(a);}
 }
 function attachmentStatus(text,error=false){$('attachment-status').textContent=text;$('attachment-status').className=error?'error':'';}
-function setAdding(value){adding=value;$('photo-files').disabled=value;$('save-link').disabled=value;$('close-attachments').disabled=value;}
+function setAdding(value){adding=value;$('photo-files').disabled=value;$('save-link').disabled=value;$('close-attachments').disabled=value;updateReviewProgress();}
 $('add-media').onclick=()=>$('attachments').showModal();
 $('close-attachments').onclick=()=>$('attachments').close();
 $('attachments').addEventListener('cancel',e=>{if(adding)e.preventDefault();});
@@ -204,8 +205,11 @@ const introCopy = {
     fit: 'Another agency? Work with us where your agreement allows. No lock-in.',
     promise: 'Find and arrange your own job? Keep 100%.',
     reviewTitle: 'Photos for your custom comp cards',
-    reviewHelp: 'Upload photos. Keep your strongest shots. Label the jobs they suit.',
-    reviewSave: 'Choices save as you go. Use Save labels to confirm label edits.',
+    reviewHelp: 'Upload your photos, then keep or reject each one. Apply changes at the bottom when you’re done.',
+    reviewSave: 'Your choices save as you go. Apply changes adds saved AI label suggestions to your kept photos. Your confirmed labels stay safe.',
+    finishTitle: 'Your photos. Your choice.',
+    finishHelp: 'Keep or reject every photo before applying your changes.',
+    applyChanges: 'Apply changes',
     terms: 'For jobs we arrange: 30% commission. Your 70% paid within 24 hours after the job.'
   },
   th: {
@@ -220,8 +224,11 @@ const introCopy = {
     fit: 'มีเอเจนซี่อยู่แล้ว? ร่วมงานกับเราได้หากสัญญาอนุญาต ไม่มีสัญญาผูกมัด',
     promise: 'หางานและจัดการเอง? รับเต็ม 100%',
     reviewTitle: 'รูปสำหรับคอมการ์ดที่ออกแบบให้คุณ',
-    reviewHelp: 'อัปโหลดรูป เลือกรูปที่ดีที่สุด แล้วติดป้ายประเภทงานที่เหมาะ',
-    reviewSave: 'การเลือกรูปบันทึกอัตโนมัติ กด Save labels เพื่อบันทึกป้ายที่แก้ไข',
+    reviewHelp: 'อัปโหลดรูป แล้วเลือกเก็บหรือคัดออกให้ครบ กด Apply changes ที่ด้านล่างเมื่อเสร็จ',
+    reviewSave: 'การเลือกรูปบันทึกอัตโนมัติ กดปุ่มเพื่อเพิ่มป้ายที่ AI แนะนำไว้ให้รูปที่เก็บ โดยคงป้ายที่คุณยืนยันแล้ว',
+    finishTitle: 'รูปของคุณ คุณเลือกเอง',
+    finishHelp: 'เลือกเก็บหรือคัดออกให้ครบทุกรูปก่อนยืนยัน',
+    applyChanges: 'ยืนยันการเปลี่ยนแปลง',
     terms: 'งานที่เราจัดหาให้: ค่าคอมมิชชัน 30% คุณรับส่วนแบ่ง 70% ภายใน 24 ชั่วโมงหลังจบงาน'
   }
 };
@@ -232,9 +239,11 @@ function setIntroLanguage(language) {
   intro.lang=language;
   if(typeof syncDemoMotion==='function')syncDemoMotion();
   document.querySelector('.review-guide').lang=language;
+  document.querySelector('.review-finish').lang=language;
   for(const node of document.querySelectorAll('[data-intro-copy]'))node.textContent=introCopy[language][node.dataset.introCopy];
   for(const button of introLanguageButtons)button.setAttribute('aria-pressed',String(button.dataset.introLanguage===language));
   document.querySelector('.intro-language').style.setProperty('--language-index',language==='th'?'1':'0');
+  updateReviewProgress();
   try{localStorage.setItem('sophs-review-intro-language',language);}catch{}
 }
 for(const button of introLanguageButtons){
@@ -267,3 +276,43 @@ demoReducedMotion.addEventListener('change',respectDemoMotion);
 respectDemoMotion();
 
 }
+
+function updateJumpVisibility(){
+  const rect=$('confirm-review').getBoundingClientRect();
+  document.querySelector('.review-follow').hidden=rect.top>=0&&rect.bottom<=document.documentElement.clientHeight;
+}
+function scheduleJumpVisibility(){cancelAnimationFrame(jumpFrame);jumpFrame=requestAnimationFrame(updateJumpVisibility);}
+window.addEventListener('scroll',scheduleJumpVisibility,{passive:true});
+window.addEventListener('resize',scheduleJumpVisibility);
+
+function updateReviewProgress(){
+  const kept=photos.filter(p=>['keep','favourite'].includes(choice(p).decision)).length;
+  const remaining=photos.filter(p=>choice(p).decision==='unreviewed').length;
+  const thai=document.querySelector('.review-guide').lang==='th';
+  $('review-progress').textContent=thai?`${kept} รูปที่เก็บ · ${remaining} รูปที่ยังไม่เลือก`:`${kept} kept · ${remaining} left to review`;
+  $('follow-progress').textContent=thai?`${remaining} รูปที่เหลือ`:(remaining?`${remaining} left to review`:'Ready to apply');
+  $('confirm-review').disabled=!photos.length||remaining>0||bulkBusy||pending.size>0||adding;
+  scheduleJumpVisibility();
+}
+$('confirm-review').onclick=async()=>{
+  if($('confirm-review').disabled)return;
+  bulkBusy=true;$('review-status').textContent='Applying saved suggestions…';render();
+  try{
+    const r=await fetch('/api/apply-suggestions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const data=await r.json();if(!r.ok)throw Error(data.error);
+    Object.assign(selections,data.selections);
+    const thai=document.querySelector('.review-guide').lang==='th';
+    $('review-status').className='';
+    $('review-status').textContent=thai?`เพิ่มป้ายให้ ${data.applied} รูป · คงป้ายที่ยืนยันแล้ว ${data.preserved} รูป`:`Suggestions applied to ${data.applied} photos. ${data.preserved} photos with confirmed labels kept unchanged.`;
+    if(data.missing)$('review-status').textContent+=thai?` อีก ${data.missing} รูปยังต้องมีป้ายแนะนำ`:` ${data.missing} kept photos still need suggestions.`;
+    saveStatus(data.applied?'Changes applied and saved on this Mac.':'Your saved labels are up to date.','saved');
+  }catch(error){$('review-status').className='error';$('review-status').textContent=error.message||'Could not apply changes. Please try again.';}
+  finally{bulkBusy=false;render();}
+};
+
+// Keep the jump inside this document, including the live srcdoc previews.
+document.querySelector('.review-jump').onclick=e=>{
+  e.preventDefault();
+  $('apply-changes').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  $('apply-changes').focus({preventScroll:true});
+};

@@ -26,10 +26,10 @@ class ProfileTests(unittest.TestCase):
             shutil.copytree(SOURCE/name, cls.root/name)
         cls.processes = []
         cls.urls = {}
-        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other')]:
+        for slug, name in [('mina', 'Mina <Test>'), ('other', 'Other'), ('apply', 'Apply Test')]:
             config = {'id': slug, 'name': name, 'data_dir': f'model-data/{slug}', 'sample_count': 5, 'initial_view': 'all'}
             (cls.root/'profiles'/f'{slug}.json').write_text(json.dumps(config))
-        for slug in ['mina', 'other', 'example']:
+        for slug in ['mina', 'other', 'example', 'apply']:
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
             process = subprocess.Popen([sys.executable, 'server.py', '--profile', f'profiles/{slug}.json', '--port', str(port)], cwd=cls.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -87,6 +87,35 @@ class ProfileTests(unittest.TestCase):
         self.assertNotIn(photo['filename'], [p['filename'] for p in other['photos']])
         self.request('mina', '/api/link', {'url':'https://example.com/portfolio', 'title':'Portfolio'})
         self.assertEqual(json.loads(self.request('other', '/api/photos')[0])['links'], [])
+
+    def test_apply_saved_suggestions(self):
+        data = json.loads(self.request('apply', '/api/photos')[0])
+        names = [p['filename'] for p in data['photos']]
+        base = {'decision':'keep', 'frame':'', 'types':[], 'uses':[], 'smile':False, 'notes':'my note', 'labelsReviewed':False}
+        with self.assertRaises(HTTPError) as caught:
+            self.request('apply', '/api/apply-suggestions', {})
+        self.assertEqual(caught.exception.code, 409)
+        caught.exception.close()
+        self.assertFalse((self.root/'model-data/apply/review-selections.json').exists())
+        for i, name in enumerate(names):
+            choice = {**base, 'decision':'reject' if i in [2,4] else 'keep'}
+            if i == 0: choice.update(labelsReviewed=True, frame='close-up', types=['beauty'])
+            self.request('apply', '/api/selection', {'filename':name, 'selection':choice})
+        before = json.loads(self.request('apply', '/api/export')[0])
+        suggestions = {name:{'frame':'full-length', 'angle':'front', 'types':['runway'], 'makeup':'no-makeup'} for name in names[:3]}
+        (self.root/'model-data/apply/label-suggestions.json').write_text(json.dumps(suggestions))
+        result = json.loads(self.request('apply', '/api/apply-suggestions', {})[0])
+        self.assertEqual((result['applied'], result['preserved'], result['missing']), (1,1,1))
+        after = json.loads(self.request('apply', '/api/export')[0])
+        self.assertEqual(after[names[0]], before[names[0]])
+        self.assertEqual(after[names[2]], before[names[2]])
+        self.assertEqual(after[names[1]]['frame'], 'full-length')
+        self.assertEqual(after[names[1]]['types'], ['runway'])
+        self.assertEqual(after[names[1]]['notes'], 'my note')
+        self.assertEqual(after[names[1]]['makeup'], 'unknown')
+        self.assertFalse(after[names[1]]['labelsReviewed'])
+        repeat = json.loads(self.request('apply', '/api/apply-suggestions', {})[0])
+        self.assertEqual(repeat['applied'], 0)
 
     def test_access_boundaries(self):
         for path, data, headers in [('/', None, {'Host':'evil.example'}), ('/api/link', b'{}', {'Origin':'https://evil.example','Content-Type':'application/json'}), ('/photos/../server.py', None, {})]:
