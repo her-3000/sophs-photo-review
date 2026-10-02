@@ -414,7 +414,7 @@ for(const select of document.querySelectorAll('#labels select')){
     };
     buttons.push(button);list.append(button);
   }
-  trigger.onclick=()=>{const opening=list.hidden;syncLabelSelects();list.hidden=!opening;trigger.setAttribute('aria-expanded',String(opening));};
+  trigger.onclick=()=>{const opening=list.hidden;syncLabelSelects();list.hidden=!opening;trigger.setAttribute('aria-expanded',String(opening));if(opening)list.scrollIntoView({block:'nearest',inline:'nearest'});};
   trigger.onkeydown=event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();syncLabelSelects();list.hidden=false;trigger.setAttribute('aria-expanded','true');(buttons.find(b=>b.dataset.value===select.value)||buttons[0]).focus();}};
   select.hidden=true;select.after(wrapper);wrapper.append(trigger,list);
   select.addEventListener('change',syncLabelSelects);

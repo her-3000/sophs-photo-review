@@ -53,3 +53,13 @@ document.querySelector('#refresh').onclick = refreshAll;
 sizeScreens();
 checkChanges();
 setInterval(checkChanges, 2000);
+
+for(const [id,title] of [['computer','Computer preview'],['tablet','iPad preview'],['phone','iPhone preview']]){
+  document.querySelector('#'+id+'-size').onchange=event=>{
+    const [width,height]=event.target.value.split('x').map(Number);
+    const frame=document.querySelector('iframe[title="'+title+'"]');
+    frame.dataset.width=String(width);frame.dataset.height=String(height);
+    document.querySelector('#'+id+'-dimensions').textContent=width+' × '+height;
+    sizeScreens();
+  };
+}
