@@ -83,14 +83,13 @@ header>p{margin-left:auto;margin-right:auto;text-align:center}
 .masthead{gap:18px 24px}
 .header-actions{grid-column:1/-1;grid-row:2;justify-self:center;align-items:center}
 .page-title{grid-row:3}
-.choices-export{grid-column:3;grid-row:1;justify-self:end;color:#666;font-size:13px;text-underline-offset:3px;text-align:right}
 .clip-button{justify-content:center;max-width:100%;min-height:56px;padding:13px 20px;gap:12px;border:1.5px solid #333;border-radius:3px;background:#faf9f7;box-shadow:3px 3px 0 #d8d7d2;font-family:'Courier New',Courier,monospace;font-size:18px;font-weight:700;letter-spacing:.035em;text-transform:uppercase}
 .clip-button span{display:inline;filter:url('#stamp-ink')}
 .clip-button:hover{background:#eeede9;border-color:#222;box-shadow:2px 2px 0 #c7c6c0}
 .clip-button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #c7c6c0}
 .clip-button svg{flex:0 0 auto;width:25px;height:25px}
 .clip-button .upload-cursor{width:18px;height:22px;shape-rendering:crispEdges}
-@media(max-width:600px){.masthead{gap:18px 10px}.choices-export{font-size:11px;max-width:88px}.clip-button{font-size:15px;min-height:54px;padding:12px 14px;gap:9px}.clip-button span{display:inline}.clip-button svg{width:23px;height:23px}.clip-button .upload-cursor{width:16px;height:20px}}
+@media(max-width:600px){.masthead{gap:18px 10px}.clip-button{font-size:15px;min-height:54px;padding:12px 14px;gap:9px}.clip-button span{display:inline}.clip-button svg{width:23px;height:23px}.clip-button .upload-cursor{width:16px;height:20px}}
 
 /* Bilingual model benefits; the removed eyebrow keeps its original breathing room. */
 .title-breathing-room{display:block;height:14px}
@@ -143,12 +142,60 @@ header{padding-top:32px}
 
 /* A compact silent application loop, using only its lightweight web export. */
 .application-demo{max-width:440px;margin:26px auto 24px;text-align:center}
-.demo-player{position:relative;width:180px;max-width:100%;margin:auto}
+.demo-player{position:relative;width:240px;max-width:100%;margin:auto}
 .application-demo video{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:contain;border-radius:10px;background:#e9e7e2;box-shadow:0 3px 15px #0000000e}
 #demo-motion{position:absolute;right:7px;bottom:7px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0;border:0;border-radius:50%;background:#ffffffd9;color:#222;font-size:16px;line-height:1}
 .application-demo figcaption{margin:14px auto 0;font-size:13px;line-height:1.6;color:#555;text-wrap:pretty}
-@media(max-width:600px){.application-demo{margin:22px auto}.demo-player{width:160px}.application-demo figcaption{max-width:310px;font-size:12px}}
+@media(max-width:600px){.application-demo{margin:22px auto}.demo-player{width:214px}.application-demo figcaption{max-width:310px;font-size:12px}}
 
 .agency-intro .agency-promise{font-size:14px;font-weight:500;color:#78519c;max-width:540px}
 
 .application-demo .caption-highlight{background:#f5e48199;padding:2px 5px;box-decoration-break:clone;-webkit-box-decoration-break:clone;line-height:1.85}
+
+/* Small mobile-first refinements, retaining the approved stamp, folder and palette. */
+.masthead{row-gap:18px;margin-bottom:28px}
+.agency-intro{margin-bottom:28px}
+.agency-intro p{margin:12px auto}
+.review-guide{text-align:center;max-width:620px;margin:28px auto 0}
+.review-guide h2{font-size:22px;font-weight:500;color:#78519c;line-height:1.35}
+.review-guide p{margin:10px auto;color:#555}
+.review-guide .hint{color:#777;font-size:12px}
+.photo-filters>label{min-width:0}
+.actions button,.bulk .top button,.check,#close-labels,#close-attachments,#close-viewer{min-height:44px}
+.check input{width:18px;height:18px;flex-shrink:0;accent-color:#78519c}
+#save-status{position:fixed;z-index:5;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);margin:0;padding:12px 18px;border:1px solid #e2dfd7;border-radius:16px;background:#faf9f7;box-shadow:0 4px 18px #00000015;text-align:center;font-size:14px;min-height:0;pointer-events:none}
+#save-status:not([data-state]){display:none}
+#save-status[data-state=saved]{color:#426444}
+#labels{overflow:hidden}
+#label-form{display:flex;flex-direction:column;max-height:calc(90vh - 48px);max-height:calc(90dvh - 48px)}
+#label-form>.top{flex-shrink:0;margin-bottom:8px}
+.label-body{overflow-y:auto;min-height:0;padding-right:4px;overscroll-behavior:contain}
+.label-body>p:first-child{margin-top:8px}
+#quick-shot{width:100%;min-width:0}
+.label-footer{flex-shrink:0;padding-top:12px;background:#faf9f7;border-top:1px solid #e8e7e3}
+.label-footer #save-labels{width:100%;min-height:48px;margin:0}
+.label-footer p:empty{display:none}
+.label-footer p{font-size:13px;margin:0 0 10px}
+@media(max-width:600px){
+  .masthead{row-gap:16px;margin-bottom:24px}
+  .title-breathing-room{height:8px}
+  .agency-intro{margin-bottom:24px}
+  .agency-intro h2{margin-bottom:16px}
+  .agency-intro .line-update,.agency-intro .agency-fit,.agency-intro .agency-terms{margin-top:12px}
+  .review-guide{margin-top:24px}
+  .review-guide h2{font-size:20px}
+  .review-guide p{font-size:14px}
+  .photo-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px 12px}
+  .photo-filters>label{width:auto;text-align:left}
+  .photo-filters>label:last-child{grid-column:1/-1}
+  .photo-filters select,.photo-filters input{width:100%;min-width:0;padding:12px;font-size:16px}
+  .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .actions button{padding:9px 4px;font-size:12px}
+  #labels{padding:16px;width:calc(100% - 24px);max-height:92vh;max-height:92dvh}
+  #label-form{max-height:calc(92vh - 34px);max-height:calc(92dvh - 34px)}
+  #label-title{font-size:20px}
+  .label-footer{padding-bottom:env(safe-area-inset-bottom)}
+  .bulk .filters{gap:8px}
+}
+
+#demo-motion{width:44px;height:44px;min-height:44px}

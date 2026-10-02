@@ -39,14 +39,22 @@ function matches(p) {
   const detailMatch=!query||query.split(/\s+/).every(term=>haystack.includes(term));
   return detailMatch && (year==='all'||(year==='unknown'?!/^\d{4}/.test(p.date):p.date.startsWith(year))) && (d==='all'||(d==='not-rejected'?s.decision!=='reject':d==='keep'?['keep','favourite'].includes(s.decision):s.decision===d)) && (tag==='all'||hasTag(s,tag)||(!s.labelsReviewed&&hasTag(suggestions[p.filename]||{},tag)));
 }
+let saveFeedbackTimer;
+function saveStatus(text, state) {
+  clearTimeout(saveFeedbackTimer);
+  const status=$('save-status');
+  status.textContent=text;status.dataset.state=state;
+  status.className=state==='error'?'error':'';
+  if(state==='saved')saveFeedbackTimer=setTimeout(()=>{status.textContent='';delete status.dataset.state;},5000);
+}
 async function save(p,s) {
   if(pending.has(p.filename)) return false;
-  pending.add(p.filename); $('save-status').className=''; $('save-status').textContent='Saving…'; render();
+  pending.add(p.filename); saveStatus('Saving…','saving'); render();
   try {
     const r=await fetch('/api/selection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:p.filename,selection:s})});
     if(!r.ok) throw Error();
-    selections[p.filename]=s; $('save-status').textContent='Saved on this Mac.'; return true;
-  } catch { $('save-status').className='error'; $('save-status').textContent='Could not save. Your last saved choice is unchanged. Please try again.'; return false; }
+    selections[p.filename]=s; saveStatus(pending.size>1?'Saving…':'Saved on this Mac.',pending.size>1?'saving':'saved'); return true;
+  } catch { saveStatus('Could not save. Your last saved choice is unchanged. Please try again.','error'); return false; }
   finally {pending.delete(p.filename);render();}
 }
 function openLabels(p) {
@@ -118,11 +126,11 @@ $('clear-selected').onclick=()=>{selected.clear();render();};
 $('quick-shot').onchange=()=>{const preset=shotPresets[$('quick-shot').value];if(preset)for(const [key,value]of Object.entries(preset))$(key).value=value;};
 $('apply-bulk').onclick=async()=>{
   if($('apply-bulk').disabled)return;
-  const names=[...selected];bulkBusy=true;$('save-status').className='';$('save-status').textContent='Saving labels…';render();
+  const names=[...selected];bulkBusy=true;saveStatus('Saving labels…','saving');render();
   try{
     const r=await fetch('/api/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filenames:names,category:$('bulk-category').value,shot:$('bulk-shot').value})});
-    if(!r.ok)throw Error();const data=await r.json();Object.assign(selections,data.selections);selected.clear();$('save-status').textContent='Labels saved for '+names.length+' photos.';
-  }catch{$('save-status').className='error';$('save-status').textContent='Could not save labels. Your selection is still here; please try again.';}
+    if(!r.ok)throw Error();const data=await r.json();Object.assign(selections,data.selections);selected.clear();saveStatus('Labels saved for '+names.length+' photos.','saved');
+  }catch{saveStatus('Could not save labels. Your selection is still here; please try again.','error');}
   finally{bulkBusy=false;render();}
 };
 
@@ -190,11 +198,14 @@ const introCopy = {
     headlineModel: 'You model.',
     demoPrefix: 'Our goal: ',
     demoCaption: 'apply within 2 minutes of finding a suitable job for you, through the client’s preferred channel.',
-    lead: 'AI-assisted applications. Comp cards matched to the jobs you love. Less scrolling. Less admin.',
+    lead: 'Comp cards matched to the jobs you love. We handle the applications.',
     lineStart: 'Your private ',
-    lineEnd: ' feed: applications, sent dates, job dates and travel times. We invite you into a job group with the client.',
-    fit: 'Already with an agency? We’re happy to send you work, as your agreement allows. No lock-in contracts.',
-    promise: 'Find and arrange your own job? Keep 100%. That’s our promise.',
+    lineEnd: ' updates: applications, dates and travel times. Plus a job group with the client.',
+    fit: 'Another agency? Work with us where your agreement allows. No lock-in.',
+    promise: 'Find and arrange your own job? Keep 100%.',
+    reviewTitle: 'Photos for your custom comp cards',
+    reviewHelp: 'Upload photos. Keep your strongest shots. Label the jobs they suit.',
+    reviewSave: 'Choices save as you go. Use Save labels to confirm label edits.',
     terms: 'For jobs we arrange: 30% commission. Your 70% paid within 24 hours after the job.'
   },
   th: {
@@ -203,11 +214,14 @@ const introCopy = {
     headlineModel: 'คุณโฟกัสที่งานได้เต็มที่',
     demoPrefix: 'เป้าหมายของเรา: ',
     demoCaption: 'สมัครภายใน 2 นาทีหลังพบงานที่เหมาะกับคุณ ผ่านช่องทางที่ลูกค้าต้องการ',
-    lead: 'ใช้ AI ช่วยสมัครงาน พร้อมคอมการ์ดที่เหมาะกับงานที่คุณชอบ ไม่ต้องเสียเวลาไล่หางานและสมัครเองทั้งวัน',
+    lead: 'คอมการ์ดที่เหมาะกับงานที่คุณชอบ เราจัดการสมัครงานให้',
     lineStart: 'อัปเดตผ่าน ',
-    lineEnd: ' ส่วนตัว: งานที่สมัครให้ วันที่สมัคร วันทำงาน และเวลาเดินทาง พร้อมเชิญคุณเข้ากลุ่มงานกับลูกค้า',
-    fit: 'มีเอเจนซี่อยู่แล้ว? เรายินดีส่งงานให้คุณ หากสัญญาของคุณอนุญาต ไม่มีสัญญาผูกมัด',
-    promise: 'หางานและจัดการเอง? รับเต็ม 100% นี่คือคำสัญญาของเรา',
+    lineEnd: ' ส่วนตัว: งานที่สมัคร วันที่ และเวลาเดินทาง พร้อมกลุ่มงานกับลูกค้า',
+    fit: 'มีเอเจนซี่อยู่แล้ว? ร่วมงานกับเราได้หากสัญญาอนุญาต ไม่มีสัญญาผูกมัด',
+    promise: 'หางานและจัดการเอง? รับเต็ม 100%',
+    reviewTitle: 'รูปสำหรับคอมการ์ดที่ออกแบบให้คุณ',
+    reviewHelp: 'อัปโหลดรูป เลือกรูปที่ดีที่สุด แล้วติดป้ายประเภทงานที่เหมาะ',
+    reviewSave: 'การเลือกรูปบันทึกอัตโนมัติ กด Save labels เพื่อบันทึกป้ายที่แก้ไข',
     terms: 'งานที่เราจัดหาให้: ค่าคอมมิชชัน 30% คุณรับส่วนแบ่ง 70% ภายใน 24 ชั่วโมงหลังจบงาน'
   }
 };
@@ -217,7 +231,8 @@ function setIntroLanguage(language) {
   const intro=document.querySelector('.agency-intro');
   intro.lang=language;
   if(typeof syncDemoMotion==='function')syncDemoMotion();
-  for(const node of intro.querySelectorAll('[data-intro-copy]'))node.textContent=introCopy[language][node.dataset.introCopy];
+  document.querySelector('.review-guide').lang=language;
+  for(const node of document.querySelectorAll('[data-intro-copy]'))node.textContent=introCopy[language][node.dataset.introCopy];
   for(const button of introLanguageButtons)button.setAttribute('aria-pressed',String(button.dataset.introLanguage===language));
   document.querySelector('.intro-language').style.setProperty('--language-index',language==='th'?'1':'0');
   try{localStorage.setItem('sophs-review-intro-language',language);}catch{}
