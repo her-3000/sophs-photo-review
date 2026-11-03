@@ -58,3 +58,7 @@ Local stamp heading follow-up, 2 October: Your photos. Your choice. now shares t
 ## Git checkpoint 2.1.0
 
 Authorised by Callum after the purple stamp refinement. Includes all approved local follow-ups since 2.0.0: hidden scrollbars, concise intro, shared rounded photo viewer with small Close and outside-tap dismissal, centred mobile photo/year headings, no Date unknown toggle, original-preserving 100 MB/HEIC/TIFF uploads, centred cloud-link dialog, and purple stamp finish heading. Eight isolated Python checks plus app/preview JavaScript syntax pass. Browser behaviour/layout evidence is recorded above. Code only; private originals, selections, suggestions and model operational data remain local. GitHub backup does not deploy the public website or activate model login.
+
+## Combined website and Sophie views — 3 October
+
+Open http://127.0.0.1:4191/website-preview#sophie. The same page contains homepage, login and Sophie photo-review rows, each computer/iPad/iPhone with size selectors. Sophie uses the existing local read-only preview document, not a fabricated authenticated session. All preview POST requests remain forbidden; actual editing stays on 4188. Public frames load from the existing 4176 server; private photo data stays under this owner. Nine frames and Sophie’s loaded photo controls verified in the Codex browser; three-device screenshot saved. This local addition is not yet pushed.
